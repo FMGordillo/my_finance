@@ -166,12 +166,12 @@ export default function Home() {
                       <label>
                         <span>Amount</span>
                         <div className="relative">
-                          <span className="absolute left-0 pl-1 text-black">
+                          <span className="absolute bottom-0 left-0 top-0 block py-2 pl-2 text-black">
                             $
                           </span>
                         </div>
                         <input
-                          className="pl-4 pr-2 text-black"
+                          className="px-2 py-2 pl-5 text-black"
                           required
                           type="number"
                           {...field}

@@ -61,8 +61,9 @@ const Movements: FunctionComponent<{
                   <span className="overflow-hidden overflow-ellipsis whitespace-nowrap">
                     {movement.createdAt
                       ? movement.createdAt.toLocaleString("es-ES", {
-                          dateStyle: "short",
-                          timeStyle: "short",
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: "numeric",
                         })
                       : ""}
                   </span>
