@@ -116,6 +116,24 @@ export default function Home() {
           content="Manage your financing with this app"
         />
         <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/site.webmanifest" />
       </Head>
 
       <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
@@ -128,7 +146,7 @@ export default function Home() {
 
             <header className="flex justify-end">
               <button
-                className="rounded-full bg-white/10 px-2 py-2 font-semibold text-white no-underline transition hover:bg-white/20"
+                className="rounded-full bg-white/10 px-3 py-2 font-semibold text-white no-underline transition hover:bg-white/20"
                 onClick={
                   sessionData ? () => void signOut() : () => void signIn()
                 }
@@ -240,6 +258,15 @@ export default function Home() {
             )}
           </Formik>
         </div>
+        <footer className="absolute left-0 right-0 bottom-0">
+          <a
+            className="text-sm text-slate-400"
+            href="https://www.flaticon.com/free-icons/money"
+            title="money icons"
+          >
+            Money icons created by Freepik - Flaticon
+          </a>
+        </footer>
       </main>
     </>
   );
