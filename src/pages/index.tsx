@@ -29,17 +29,26 @@ export default function Home() {
       <Metahead />
       <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pb-12 pt-4 text-white">
         <div className="container mx-auto flex flex-col gap-4 pt-8">
+          <button
+            className="max-w-[200px] self-end flex-1 rounded-full bg-white/10 px-4 py-2 text-center font-semibold text-white no-underline transition hover:bg-white/20"
+            onClick={() => void (sessionData ? signOut() : signIn())}
+          >
+            Sign {sessionData ? "out" : "in"}
+          </button>
+
           <Balance
             loading={isDeleting || isRefetching}
             amount={data?.balance}
           />
 
-          <Link
-            className="text-center flex-1 rounded-full bg-white/10 px-4 py-2 font-semibold text-white no-underline transition hover:bg-white/20"
-            href="/new-movement"
-          >
-            New movement
-          </Link>
+          <div className="flex-1 flex justify-center">
+            <Link
+              className="block max-w-[200px] rounded-full bg-white/10 px-4 py-2 text-center font-semibold text-white no-underline transition hover:bg-white/20"
+              href="/new-movement"
+            >
+              New movement
+            </Link>
+          </div>
 
           <Movements
             data={data?.movements}
