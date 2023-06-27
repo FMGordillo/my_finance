@@ -1,12 +1,11 @@
 import { Field, Form, Formik } from "formik";
-import invariant from "tiny-invariant";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import { api } from "~/utils/api";
 
 const initialData = {
-  amount: "",
-  type: undefined,
+  amount: 0,
+  type: "",
 };
 
 const CurrentBalance = () => {
@@ -22,7 +21,7 @@ export default function Home() {
   const { isLoading, mutateAsync } = api.movement.create.useMutation();
   const { data: sessionData } = useSession();
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: { type: string; amount: number }) => {
     try {
       let amount = Number(e.amount);
       amount = e.type === "decrease" ? amount * -1 : amount;
@@ -74,7 +73,7 @@ export default function Home() {
                 <div className="flex gap-4">
                   <label
                     className={`select-none bg-slate-500 px-2 py-2 ${
-                      values.type === "increase" && "bg-slate-600"
+                      values.type === "increase" ? "bg-slate-600" : ""
                     }`}
                   >
                     <Field
@@ -87,7 +86,7 @@ export default function Home() {
                   </label>
                   <label
                     className={`select-none bg-slate-500 px-2 py-2 ${
-                      values.type === "decrease" && "bg-slate-600"
+                      values.type === "decrease" ? "bg-slate-600" : ""
                     }`}
                   >
                     <Field
