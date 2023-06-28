@@ -1,3 +1,5 @@
+import invariant from "tiny-invariant";
+import { Movement } from "@prisma/client";
 import type { Decimal } from "@prisma/client/runtime";
 import { Field, Form, Formik } from "formik";
 import type { FieldProps, FormikHelpers } from "formik";
@@ -6,8 +8,13 @@ import Head from "next/head";
 import type { FunctionComponent } from "react";
 import { z } from "zod";
 import { api } from "~/utils/api";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
-const initialData = {
+type FormValues = { type: string; amount: number; description: string };
+
+const initialData: FormValues = {
+  description: "",
   amount: 0,
   type: "",
 };
@@ -31,21 +38,80 @@ const CurrentBalance: FunctionComponent<{
   ) : null;
 };
 
-type FormValues = { type: string; amount: number };
+const Movements: FunctionComponent<{
+  data: Movement[] | undefined;
+  loading: boolean;
+}> = ({ data, loading }) => {
+  const router = useRouter();
+
+  const getPageURL = (type: "inc" | "dec") => {
+    try {
+      const pageQuery = router.query.page || "1";
+      invariant(typeof pageQuery === "string", "Page should be a string");
+
+      const page = Number(pageQuery);
+      invariant(!isNaN(page), "Page should be a number");
+
+      const pageCalculated =
+        type === "dec" ? Math.abs(page - 1 === 0 ? page : page - 1) : page + 1;
+
+      return `/?page=${pageCalculated}`;
+    } catch (error) {
+      console.info(error);
+      return "";
+    }
+  };
+
+  return (
+    <section className="flex gap-4">
+      <Link href={getPageURL("dec")}>{"<"}</Link>
+      <table>
+        <thead>
+          <tr className="flex gap-2">
+            <th>Amount</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <span>Wait...</span>
+          ) : (
+            data?.map((movement) => (
+              <tr key={movement.id} className="flex gap-2">
+                <td>${movement.amount as unknown as string}</td>
+                <td>{movement.description}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+      <Link href={getPageURL("inc")}>{">"}</Link>
+    </section>
+  );
+};
 
 const validation = z
   .object({
     amount: z.number().positive().safe(),
+    description: z.string(),
     type: z.string().min(1, "Select an option first"),
   })
   .required();
 
 export default function Home() {
+  const router = useRouter();
   const {
-    data,
+    data: amountData,
     isRefetching: amountLoading,
-    refetch,
+    refetch: refetchAmount,
   } = api.movement.getBalance.useQuery();
+
+  const {
+    data: movementData,
+    isRefetching: movementLoading,
+    refetch: refetchMovement,
+  } = api.movement.get.useQuery(Number(router.query.page as unknown as string));
+
   const { isLoading, mutateAsync } = api.movement.create.useMutation();
   const { data: sessionData } = useSession();
 
@@ -56,8 +122,11 @@ export default function Home() {
     try {
       let amount = Number(formValues.amount);
       amount = formValues.type === "decrease" ? amount * -1 : amount;
-      await mutateAsync({ amount });
-      void refetch();
+      await mutateAsync({ amount, description: formValues.description });
+
+      void refetchAmount();
+      void refetchMovement();
+
       helpers.resetForm();
     } catch (error) {
       console.error("error while sending expense", error);
@@ -67,6 +136,7 @@ export default function Home() {
   const handleValidation = (formValues: FormValues) => {
     const errors: Record<keyof FormValues, string | undefined> = {
       amount: undefined,
+      description: undefined,
       type: undefined,
     };
 
@@ -94,10 +164,10 @@ export default function Home() {
       </Head>
       <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 text-white">
         <div className="container mx-auto flex flex-col">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center justify-between">
             <CurrentBalance
               loading={isLoading || amountLoading}
-              amount={data?._sum.amount}
+              amount={amountData?._sum.amount}
             />
 
             <header className="flex justify-end">
@@ -111,6 +181,8 @@ export default function Home() {
               </button>
             </header>
           </div>
+
+          <Movements loading={movementLoading} data={movementData} />
 
           <hr />
 
@@ -127,12 +199,32 @@ export default function Home() {
                       <label>
                         <span>Amount</span>
                         <div className="relative">
-                          <span className="absolute left-0 text-black">$</span>
+                          <span className="absolute left-0 pl-1 text-black">
+                            $
+                          </span>
                         </div>
                         <input
-                          className="pl-4 text-black"
+                          className="pl-4 pr-2 text-black"
                           required
                           type="number"
+                          {...field}
+                        />
+                        {meta.touched && meta.error && (
+                          <div className="text-red-500">{meta.error}</div>
+                        )}
+                      </label>
+                    )}
+                  </Field>
+
+                  <Field name="description">
+                    {({ field, meta }: FieldProps) => (
+                      <label className="flex flex-col items-start">
+                        <span>Description</span>
+                        <input
+                          className="px-2 py-2 text-black"
+                          required
+                          placeholder="Whiskas"
+                          type="string"
                           {...field}
                         />
                         {meta.touched && meta.error && (
