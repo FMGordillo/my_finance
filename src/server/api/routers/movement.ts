@@ -34,11 +34,16 @@ export const movementRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.number().optional())
     .query(({ input, ctx }) => {
-      const page = (input || 1) * 5;
+      const take = 5;
+      const skip = ((input || 1) - 1) * take;
+
       return ctx.prisma.movement.findMany({
         where: { userId: ctx.session.user.id },
-        take: page,
-        skip: page - 1,
+        skip,
+        take,
+        orderBy: {
+          createdAt: "desc",
+        },
       });
     }),
 });

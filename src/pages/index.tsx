@@ -63,28 +63,34 @@ const Movements: FunctionComponent<{
   };
 
   return (
-    <section className="flex gap-4">
+    <section className="flex h-72 gap-4">
       <Link href={getPageURL("dec")}>{"<"}</Link>
-      <table>
-        <thead>
-          <tr className="flex gap-2">
-            <th>Amount</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <span>Wait...</span>
-          ) : (
-            data?.map((movement) => (
-              <tr key={movement.id} className="flex gap-2">
+      {loading ? (
+        <span>Wait...</span>
+      ) : (
+        <table>
+          <thead>
+            <tr className="grid grid-cols-3 gap-2">
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.map((movement) => (
+              <tr key={movement.id} className="grid grid-cols-3 gap-4">
+                <td>
+                  {movement.createdAt
+                    ? movement.createdAt.toLocaleString()
+                    : ""}
+                </td>
                 <td>${movement.amount as unknown as string}</td>
                 <td>{movement.description}</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      )}
       <Link href={getPageURL("inc")}>{">"}</Link>
     </section>
   );
@@ -110,12 +116,14 @@ export default function Home() {
     data: movementData,
     isRefetching: movementLoading,
     refetch: refetchMovement,
-  } = api.movement.get.useQuery(Number(router.query.page as unknown as string));
+  } = api.movement.get.useQuery(
+    Number(router.query.page || (0 as unknown as string))
+  );
 
   const { isLoading, mutateAsync } = api.movement.create.useMutation();
   const { data: sessionData } = useSession();
 
-  const handleSubmit = async (
+  const handleFormSubmit = async (
     formValues: FormValues,
     helpers: FormikHelpers<FormValues>
   ) => {
@@ -189,9 +197,15 @@ export default function Home() {
           <Formik
             validate={handleValidation}
             initialValues={initialData}
-            onSubmit={(values, props) => handleSubmit(values, props)}
+            onSubmit={(values, props) => handleFormSubmit(values, props)}
           >
-            {({ errors, isSubmitting, isValidating, values }) => (
+            {({
+              errors,
+              handleSubmit,
+              isSubmitting,
+              isValidating,
+              setValues,
+            }) => (
               <div className="mt-4">
                 <Form className="flex flex-col gap-4">
                   <Field name="amount" placeholder="420" required>
@@ -236,46 +250,36 @@ export default function Home() {
 
                   <div className="flex flex-col">
                     <div className="flex gap-4">
-                      <label
-                        className={`select-none bg-slate-500 px-2 py-2 ${
-                          values.type === "increase" ? "bg-slate-600" : ""
-                        }`}
+                      <button
+                        disabled={isSubmitting || isValidating}
+                        className="select-none bg-emerald-600 px-2 py-2 disabled:bg-slate-500"
+                        onClick={() => {
+                          setValues((formData) => ({
+                            ...formData,
+                            type: "increase",
+                          }));
+                          handleSubmit();
+                        }}
                       >
-                        <Field
-                          className="hidden"
-                          type="radio"
-                          name="type"
-                          value="increase"
-                        />
-                        <span>Add +</span>
-                      </label>
-                      <label
-                        className={`select-none bg-slate-500 px-2 py-2 ${
-                          values.type === "decrease" ? "bg-slate-600" : ""
-                        }`}
+                        Add +
+                      </button>
+                      <button
+                        disabled={isSubmitting || isValidating}
+                        className="select-none bg-orange-500 px-2 py-2 disabled:bg-slate-500"
+                        onClick={() => {
+                          setValues((formData) => ({
+                            ...formData,
+                            type: "decrease",
+                          }));
+                          handleSubmit();
+                        }}
                       >
-                        <Field
-                          className="hidden"
-                          type="radio"
-                          name="type"
-                          value="decrease"
-                        />
-                        <span>Remove -</span>
-                      </label>
+                        Remove -
+                      </button>
                     </div>
                     {errors.type && (
                       <span className="text-red-500">{errors.type}</span>
                     )}
-                  </div>
-
-                  <div>
-                    <button
-                      disabled={isSubmitting || isLoading || isValidating}
-                      type="submit"
-                      className="rounded bg-gray-500 px-2 py-2"
-                    >
-                      Send expense
-                    </button>
                   </div>
                 </Form>
               </div>
