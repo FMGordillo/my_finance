@@ -33,11 +33,18 @@ export const movementRouter = createTRPCRouter({
 
   get: protectedProcedure
     .input(z.number().optional())
-    .query(({ input, ctx }) => {
+    .query(async ({ input, ctx }) => {
       const take = 5;
       const skip = ((input || 1) - 1) * take;
 
-      return ctx.prisma.movement.findMany({
+      const balance = await ctx.prisma.movement.aggregate({
+        _sum: {
+          amount: true,
+        },
+        where: { userId: ctx.session.user.id },
+      });
+
+      const movements = await ctx.prisma.movement.findMany({
         where: { userId: ctx.session.user.id },
         skip,
         take,
@@ -45,5 +52,14 @@ export const movementRouter = createTRPCRouter({
           createdAt: "desc",
         },
       });
+
+      return {
+        balance: balance._sum.amount,
+        movements,
+      };
     }),
+
+  delete: protectedProcedure.input(z.string()).mutation(({ input, ctx }) => {
+    return ctx.prisma.movement.delete({ where: { id: input } });
+  }),
 });

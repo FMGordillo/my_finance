@@ -5,7 +5,7 @@ import type { Decimal } from "@prisma/client/runtime";
 import type { FieldProps, FormikHelpers } from "formik";
 import type { FunctionComponent } from "react";
 import { Field, Form, Formik } from "formik";
-import { Movement } from "@prisma/client";
+import type { Movement } from "@prisma/client";
 import { api } from "~/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -48,8 +48,9 @@ const CurrentBalance: FunctionComponent<{
 
 const Movements: FunctionComponent<{
   data: Movement[] | undefined;
+  handleDelete: (movement: Movement) => Promise<void>;
   loading: boolean;
-}> = ({ data, loading }) => {
+}> = ({ handleDelete, data, loading }) => {
   const router = useRouter();
 
   const getPageURL = (type: "inc" | "dec") => {
@@ -70,6 +71,16 @@ const Movements: FunctionComponent<{
     }
   };
 
+  const handleRemove = (movement: Movement) => {
+    const response = confirm("Are you sure you want to delete this field?");
+
+    if (!response) {
+      return;
+    }
+
+    void handleDelete(movement);
+  };
+
   return (
     <section className="flex h-72 gap-4">
       <Link href={getPageURL("dec")}>{"<"}</Link>
@@ -78,10 +89,11 @@ const Movements: FunctionComponent<{
       ) : (
         <table>
           <thead>
-            <tr className="grid grid-cols-3 gap-2">
+            <tr className="grid grid-cols-4 gap-2">
               <th>Date</th>
               <th>Amount</th>
               <th>Description</th>
+              <th>Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -90,18 +102,31 @@ const Movements: FunctionComponent<{
               const isNegative = amount[0] === "-";
 
               return (
-                <tr key={movement.id} className="grid grid-cols-3 gap-4">
+                <tr key={movement.id} className="grid grid-cols-4 gap-4">
                   <td>
                     {movement.createdAt
                       ? movement.createdAt.toLocaleString()
                       : ""}
                   </td>
                   <td
-                    className={`${isNegative ? "text-red-600" : "text-green-600"}`}
+                    className={`${
+                      isNegative ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {amount}
                   </td>
                   <td>{movement.description}</td>
+                  <td className="flex items-center">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleRemove(movement);
+                      }}
+                      className="rounded bg-red-800 px-2"
+                    >
+                      X
+                    </button>
+                  </td>
                 </tr>
               );
             })}
@@ -123,21 +148,17 @@ const formValidation = z
 
 export default function Home() {
   const router = useRouter();
-  const {
-    data: amountData,
-    isRefetching: amountLoading,
-    refetch: refetchAmount,
-  } = api.movement.getBalance.useQuery();
 
-  const {
-    data: movementData,
-    isRefetching: movementLoading,
-    refetch: refetchMovement,
-  } = api.movement.get.useQuery(
+  const { data, isRefetching, refetch } = api.movement.get.useQuery(
     Number((router.query.page as unknown as string) || "0")
   );
 
-  const { isLoading, mutateAsync } = api.movement.create.useMutation();
+  const { isLoading: isCreating, mutateAsync } =
+    api.movement.create.useMutation();
+
+  const { isLoading: isDeleting, mutateAsync: deleteMovement } =
+    api.movement.delete.useMutation();
+
   const { data: sessionData } = useSession();
 
   const handleFormSubmit = async (
@@ -149,8 +170,7 @@ export default function Home() {
       amount = formValues.type === "decrease" ? amount * -1 : amount;
       await mutateAsync({ amount, description: formValues.description });
 
-      void refetchAmount();
-      void refetchMovement();
+      void refetch();
 
       helpers.resetForm();
     } catch (error) {
@@ -180,6 +200,11 @@ export default function Home() {
     }
   };
 
+  const handleDelete = async (movement: Movement) => {
+    await deleteMovement(movement.id);
+    void refetch();
+  };
+
   return (
     <>
       <Head>
@@ -192,8 +217,8 @@ export default function Home() {
         <div className="container mx-auto flex flex-col">
           <div className="flex items-center justify-between">
             <CurrentBalance
-              loading={isLoading || amountLoading}
-              amount={amountData?._sum.amount}
+              loading={isDeleting || isCreating || isRefetching}
+              amount={data?.balance}
             />
 
             <header className="flex justify-end">
@@ -208,7 +233,11 @@ export default function Home() {
             </header>
           </div>
 
-          <Movements loading={movementLoading} data={movementData} />
+          <Movements
+            handleDelete={handleDelete}
+            loading={isDeleting || isRefetching}
+            data={data?.movements}
+          />
 
           <hr />
 
