@@ -3,7 +3,7 @@ import Link from "next/link";
 import invariant from "tiny-invariant";
 import type { Decimal } from "@prisma/client/runtime";
 import type { FieldProps, FormikHelpers } from "formik";
-import type { FunctionComponent } from "react";
+import { Fragment, FunctionComponent } from "react";
 import { Field, Form, Formik } from "formik";
 import type { Movement } from "@prisma/client";
 import { api } from "~/utils/api";
@@ -82,58 +82,59 @@ const Movements: FunctionComponent<{
   };
 
   return (
-    <section className="flex h-72 gap-4">
-      <Link href={getPageURL("dec")}>{"<"}</Link>
+    <section className="relative pt-6">
       {loading ? (
         <span>Wait...</span>
       ) : (
-        <table>
-          <thead>
-            <tr className="grid grid-cols-4 gap-2">
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Description</th>
-              <th>Delete</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div>
+          <div className="grid grid-cols-[auto_1fr_1fr_24px] gap-2">
+            <span>Date</span>
+            <span>Amount</span>
+            <span>Description</span>
+            <span></span>
             {data?.map((movement) => {
               const amount = formatCurrency(movement.amount);
               const isNegative = amount[0] === "-";
 
               return (
-                <tr key={movement.id} className="grid grid-cols-4 gap-4">
-                  <td>
+                <Fragment key={movement.id}>
+                  <span className="overflow-hidden overflow-ellipsis whitespace-nowrap">
                     {movement.createdAt
-                      ? movement.createdAt.toLocaleString()
+                      ? movement.createdAt.toLocaleString("es-ES", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })
                       : ""}
-                  </td>
-                  <td
+                  </span>
+                  <span
                     className={`${
                       isNegative ? "text-red-600" : "text-green-600"
                     }`}
                   >
                     {amount}
-                  </td>
-                  <td>{movement.description}</td>
-                  <td className="flex items-center">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleRemove(movement);
-                      }}
-                      className="rounded bg-red-800 px-2"
-                    >
-                      X
-                    </button>
-                  </td>
-                </tr>
+                  </span>
+                  <span className="overflow-hidden overflow-ellipsis whitespace-nowrap">
+                    {movement.description}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRemove(movement);
+                    }}
+                    className="rounded bg-red-800 px-2 text-center"
+                  >
+                    X
+                  </button>
+                </Fragment>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       )}
-      <Link href={getPageURL("inc")}>{">"}</Link>
+      <div className="mb-2 mt-2 flex justify-between">
+        <Link href={getPageURL("dec")}>{"< Prev"}</Link>
+        <Link href={getPageURL("inc")}>{"Next >"}</Link>
+      </div>
     </section>
   );
 };
