@@ -37,6 +37,13 @@ export const movementRouter = createTRPCRouter({
       const take = 5;
       const skip = ((input || 1) - 1) * take;
 
+      const movementsCount = await ctx.prisma.movement.aggregate({
+        _count: {
+          id: true,
+        },
+        where: { userId: ctx.session.user.id },
+      });
+
       const balance = await ctx.prisma.movement.aggregate({
         _sum: {
           amount: true,
@@ -53,9 +60,12 @@ export const movementRouter = createTRPCRouter({
         },
       });
 
+      const hasNextPage = take + skip < movementsCount._count.id;
+
       return {
         balance: balance._sum.amount,
         movements,
+        hasNextPage,
       };
     }),
 

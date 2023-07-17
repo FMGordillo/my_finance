@@ -48,14 +48,15 @@ const CurrentBalance: FunctionComponent<{
 
 const Movements: FunctionComponent<{
   data: Movement[] | undefined;
+  hasNextPage: boolean | undefined;
   handleDelete: (movement: Movement) => Promise<void>;
   loading: boolean;
-}> = ({ handleDelete, data, loading }) => {
+}> = ({ hasNextPage, handleDelete, data, loading }) => {
   const router = useRouter();
+  const pageQuery = router.query.page || "1";
 
   const getPageURL = (type: "inc" | "dec") => {
     try {
-      const pageQuery = router.query.page || "1";
       invariant(typeof pageQuery === "string", "Page should be a string");
 
       const page = Number(pageQuery);
@@ -131,9 +132,25 @@ const Movements: FunctionComponent<{
           </div>
         </div>
       )}
-      <div className="mb-2 mt-2 flex justify-between">
-        <Link href={getPageURL("dec")}>{"< Prev"}</Link>
-        <Link href={getPageURL("inc")}>{"Next >"}</Link>
+      <div className="mb-2 mt-4 grid grid-cols-2 gap-2">
+        {pageQuery !== "1" ? (
+          <Link className="flex" href={getPageURL("dec")}>
+            <button className="flex-1 rounded-full bg-white/10 px-4 py-2 font-semibold text-white no-underline transition hover:bg-white/20">
+              {"< Prev"}{" "}
+            </button>
+          </Link>
+        ) : (
+          <span />
+        )}
+        {hasNextPage ? (
+          <Link className="flex" href={getPageURL("inc")}>
+            <button className="flex-1 rounded-full bg-white/10 px-4 py-2 font-semibold text-white no-underline transition hover:bg-white/20">
+              {"Next >"}
+            </button>
+          </Link>
+        ) : (
+          <span />
+        )}
       </div>
     </section>
   );
@@ -214,7 +231,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 text-white">
+      <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
         <div className="container mx-auto flex flex-col">
           <div className="flex items-center justify-between">
             <CurrentBalance
@@ -224,7 +241,7 @@ export default function Home() {
 
             <header className="flex justify-end">
               <button
-                className="rounded-full bg-white/10 px-4 py-2 font-semibold text-white no-underline transition hover:bg-white/20"
+                className="rounded-full bg-white/10 px-2 py-2 font-semibold text-white no-underline transition hover:bg-white/20"
                 onClick={
                   sessionData ? () => void signOut() : () => void signIn()
                 }
@@ -235,9 +252,10 @@ export default function Home() {
           </div>
 
           <Movements
-            handleDelete={handleDelete}
-            loading={isDeleting || isRefetching}
             data={data?.movements}
+            handleDelete={handleDelete}
+            hasNextPage={data?.hasNextPage}
+            loading={isDeleting || isRefetching}
           />
 
           <hr />
