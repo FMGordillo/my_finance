@@ -166,9 +166,11 @@ const formValidation = z
 
 export default function Home() {
   const router = useRouter();
+  const { data: sessionData } = useSession();
 
   const { data, isRefetching, refetch } = api.movement.get.useQuery(
-    Number((router.query.page as unknown as string) || "0")
+    Number((router.query.page as unknown as string) || "0"),
+    { enabled: !!sessionData?.user }
   );
 
   const { isLoading: isCreating, mutateAsync } =
@@ -176,8 +178,6 @@ export default function Home() {
 
   const { isLoading: isDeleting, mutateAsync: deleteMovement } =
     api.movement.delete.useMutation();
-
-  const { data: sessionData } = useSession();
 
   const handleFormSubmit = async (
     formValues: FormValues,
@@ -227,7 +227,10 @@ export default function Home() {
     <>
       <Head>
         <title>Financial Stuff</title>
-        <meta name="description" content="Manage your financing with this app" />
+        <meta
+          name="description"
+          content="Manage your financing with this app"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
