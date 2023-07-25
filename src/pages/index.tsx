@@ -1,15 +1,13 @@
-import Head from "next/head";
-import type { Decimal } from "@prisma/client/runtime";
+import Balance from "~/components/Balance";
+import Metahead from "~/components/Metahead";
+import Movements from "~/components/Movements";
 import type { FieldProps, FormikHelpers } from "formik";
-import type { FunctionComponent } from "react";
-import { Field, Form, Formik } from "formik";
 import type { Movement } from "@prisma/client";
+import { Field, Form, Formik } from "formik";
 import { api } from "~/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { z } from "zod";
-import { formatCurrency } from "~/utils/currency";
-import Movements from "~/components/Movements";
 
 type FormValues = { type: string; amount: number; description: string };
 
@@ -17,27 +15,6 @@ const initialData: FormValues = {
   description: "",
   amount: 0,
   type: "",
-};
-
-const CurrentBalance: FunctionComponent<{
-  amount: Decimal | null | undefined;
-  loading: boolean;
-}> = ({ loading, amount }) => {
-  const parsedAmount = amount ? formatCurrency(amount) : "0";
-
-  return amount ? (
-    <h1 className="flex gap-2 text-2xl">
-      {loading ? (
-        <span>Recalculating...</span>
-      ) : (
-        <>
-          <span className="hidden sm:inline">Current balance</span>
-          <span className="inline sm:hidden">Balance</span>
-          <span>{parsedAmount}</span>
-        </>
-      )}
-    </h1>
-  ) : null;
 };
 
 const formValidation = z
@@ -81,13 +58,8 @@ export default function Home() {
   };
 
   const handleValidation = (formValues: FormValues) => {
-    const errors: Record<keyof FormValues, string | undefined> = {
-      amount: undefined,
-      description: undefined,
-      type: undefined,
-    };
-
     const response = formValidation.safeParse(formValues);
+
     if (response.success) {
       return {};
     } else {
@@ -96,7 +68,7 @@ export default function Home() {
           ...obj,
           [err.path[0] as string]: err.message,
         }),
-        errors
+        {}
       );
       return newErrors;
     }
@@ -109,37 +81,12 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>Financial Stuff</title>
-        <meta
-          name="description"
-          content="Manage your financing with this app"
-        />
-        <link rel="icon" href="/favicon.ico" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-        <link rel="manifest" href="/site.webmanifest" />
-      </Head>
+      <Metahead />
 
       <main className="relative mx-auto min-h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
         <div className="container mx-auto flex flex-col">
           <div className="flex items-center justify-between">
-            <CurrentBalance
+            <Balance
               loading={isDeleting || isCreating || isRefetching}
               amount={data?.balance}
             />
@@ -162,8 +109,6 @@ export default function Home() {
             hasNextPage={data?.hasNextPage}
             loading={isDeleting || isRefetching}
           />
-
-          <hr />
 
           <Formik
             validate={handleValidation}
@@ -190,6 +135,7 @@ export default function Home() {
                         </div>
                         <input
                           className="px-2 py-2 pl-5 text-black"
+                          disabled={!sessionData}
                           required
                           type="number"
                           {...field}
@@ -207,8 +153,9 @@ export default function Home() {
                         <span>Description</span>
                         <input
                           className="px-2 py-2 text-black"
-                          required
+                          disabled={!sessionData}
                           placeholder="Whiskas"
+                          required
                           type="string"
                           {...field}
                         />
@@ -222,7 +169,7 @@ export default function Home() {
                   <div className="flex flex-col">
                     <div className="flex gap-4">
                       <button
-                        disabled={isSubmitting || isValidating}
+                        disabled={!sessionData || isSubmitting || isValidating}
                         className="select-none bg-emerald-600 px-2 py-2 disabled:bg-slate-500"
                         onClick={() => {
                           setValues((formData) => ({
@@ -236,7 +183,7 @@ export default function Home() {
                       </button>
 
                       <button
-                        disabled={isSubmitting || isValidating}
+                        disabled={!sessionData || isSubmitting || isValidating}
                         className="select-none bg-orange-500 px-2 py-2 disabled:bg-slate-500"
                         onClick={() => {
                           setValues((formData) => ({
@@ -258,7 +205,7 @@ export default function Home() {
             )}
           </Formik>
         </div>
-        <footer className="absolute left-0 right-0 bottom-0">
+        <footer className="absolute bottom-0 left-0 right-0">
           <a
             className="text-sm text-slate-400"
             href="https://www.flaticon.com/free-icons/money"
