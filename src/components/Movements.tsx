@@ -1,9 +1,9 @@
-import { Fragment, FunctionComponent } from "react";
-import type { Movement } from "@prisma/client";
-import { useRouter } from "next/router";
-import invariant from "tiny-invariant";
 import Link from "next/link";
+import invariant from "tiny-invariant";
+import type { FunctionComponent } from "react";
+import type { Movement } from "@prisma/client";
 import { formatCurrency } from "~/utils/currency";
+import { useRouter } from "next/router";
 
 const Movements: FunctionComponent<{
   data: Movement[] | undefined;
@@ -42,24 +42,25 @@ const Movements: FunctionComponent<{
   };
 
   return (
-    <section className="relative pt-6">
-      {loading ? (
-        <span>Wait...</span>
-      ) : data?.length || 0 > 0 ? (
+    <section className="relative flex min-h-[520px] flex-col gap-2 pt-6">
+      <h1 className="text-lg">Movements</h1>
+      {data?.length || 0 > 0 ? (
         <>
-          <div>
-            <div className="grid grid-cols-[auto_1fr_1fr_24px] gap-2">
-              <span>Date</span>
-              <span>Amount</span>
-              <span>Description</span>
-              <span></span>
-              {data?.map((movement) => {
-                const amount = formatCurrency(movement.amount);
-                const isNegative = amount[0] === "-";
+          <div className="flex flex-col gap-3">
+            {data?.map((movement) => {
+              const amount = formatCurrency(movement.amount);
 
-                return (
-                  <Fragment key={movement.id}>
+              return (
+                <div
+                  className="grid grid-cols-[1fr_80px_40px] gap-4 rounded bg-indigo-900 px-4 py-5"
+                  key={movement.id}
+                >
+                  <p className="flex flex-col gap-1">
                     <span className="overflow-hidden overflow-ellipsis whitespace-nowrap">
+                      {movement.description}
+                    </span>
+
+                    <span className="overflow-hidden overflow-ellipsis whitespace-nowrap text-gray-400">
                       {movement.createdAt
                         ? movement.createdAt.toLocaleString("es-ES", {
                             weekday: "short",
@@ -68,29 +69,22 @@ const Movements: FunctionComponent<{
                           })
                         : ""}
                     </span>
-                    <span
-                      className={`${
-                        isNegative ? "text-red-600" : "text-green-600"
-                      }`}
-                    >
-                      {amount}
-                    </span>
-                    <span className="overflow-hidden overflow-ellipsis whitespace-nowrap">
-                      {movement.description}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleRemove(movement);
-                      }}
-                      className="rounded bg-red-800 px-2 text-center"
-                    >
-                      X
-                    </button>
-                  </Fragment>
-                );
-              })}
-            </div>
+                  </p>
+
+                  <span className="flex items-center">{amount}</span>
+
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRemove(movement);
+                    }}
+                    className="rounded bg-red-800 px-2 text-center"
+                  >
+                    X
+                  </button>
+                </div>
+              );
+            })}
           </div>
           <div className="mb-2 mt-4 grid grid-cols-2 gap-2">
             {pageQuery !== "1" ? (
@@ -112,7 +106,6 @@ const Movements: FunctionComponent<{
               <span />
             )}
           </div>
-          <hr />
         </>
       ) : null}
     </section>

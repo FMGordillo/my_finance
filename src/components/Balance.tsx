@@ -10,19 +10,14 @@ type BalanceProps = {
 const Balance: FunctionComponent<BalanceProps> = ({ loading, amount }) => {
   const parsedAmount = amount ? formatCurrency(amount) : "0";
 
-  return amount ? (
-    <h1 className="flex gap-2 text-2xl">
-      {loading ? (
-        <span>Recalculating...</span>
-      ) : (
-        <>
-          <span className="hidden sm:inline">Current balance</span>
-          <span className="inline sm:hidden">Balance</span>
-          <span>{parsedAmount}</span>
-        </>
-      )}
+  return (
+    <h1 className="flex flex-col items-center gap-1">
+      <>
+        <p className="text-3xl">{loading ? "Loading..." : parsedAmount}</p>
+        <p className="text-sm text-gray-300">Current balance</p>
+      </>
     </h1>
-  ) : null;
+  );
 };
 
 export default Balance;
