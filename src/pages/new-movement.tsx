@@ -5,6 +5,7 @@ import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
 import { useRouter } from "next/router";
+import Header from "~/components/Header";
 
 type FormValues = {
   type: string;
@@ -38,7 +39,10 @@ export default function NewMovementPage() {
     try {
       let amount = Number(formValues.amount);
       amount = formValues.type === "decrease" ? amount * -1 : amount;
-      await mutateAsync({ amount, description: formValues.description });
+      await mutateAsync({
+        amount,
+        description: formValues.description || "No description",
+      });
       helpers.resetForm();
       void router.push("/");
     } catch (error) {
@@ -66,7 +70,9 @@ export default function NewMovementPage() {
   return (
     <>
       <Metahead title="New movement" />
-      <main className="relative mx-auto h-full bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pb-12 pt-4 text-white">
+      <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pb-12 pt-4 text-white">
+        <Header />
+
         <Formik
           validate={handleValidation}
           initialValues={initialData}
@@ -80,7 +86,9 @@ export default function NewMovementPage() {
             setValues,
           }) => (
             <Form className="grid h-full grid-cols-4 grid-rows-[auto_1fr_auto_auto] gap-4">
-              <h1 className="col-span-4 pt-8 text-2xl">New movement</h1>
+              <h1 className="col-span-4 text-3xl">New movement</h1>
+
+              <br />
 
               <Field name="amount" placeholder="420" required>
                 {({ field, meta }: FieldProps) => (
@@ -109,7 +117,6 @@ export default function NewMovementPage() {
                       className="w-full px-2 py-2 text-black"
                       disabled={!sessionData}
                       placeholder="Description (optional)"
-                      required
                       type="string"
                       {...field}
                     />

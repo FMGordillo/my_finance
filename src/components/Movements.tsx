@@ -9,8 +9,7 @@ const Movements: FunctionComponent<{
   data: Movement[] | undefined;
   hasNextPage: boolean | undefined;
   handleDelete: (movement: Movement) => Promise<void>;
-  loading: boolean;
-}> = ({ hasNextPage, handleDelete, data, loading }) => {
+}> = ({ hasNextPage, handleDelete, data }) => {
   const router = useRouter();
   const pageQuery = router.query.page || "1";
 
@@ -43,9 +42,9 @@ const Movements: FunctionComponent<{
 
   return (
     <section className="relative flex min-h-[520px] flex-col gap-2 pt-6">
-      <h1 className="text-lg">Movements</h1>
       {data?.length || 0 > 0 ? (
         <>
+          <h1 className="text-lg">Movements</h1>
           <div className="flex flex-col gap-3">
             {data?.map((movement) => {
               const amount = formatCurrency(movement.amount);
@@ -86,6 +85,7 @@ const Movements: FunctionComponent<{
               );
             })}
           </div>
+
           <div className="mb-2 mt-4 grid grid-cols-2 gap-2">
             {pageQuery !== "1" ? (
               <Link className="flex" href={getPageURL("dec")}>
@@ -96,6 +96,7 @@ const Movements: FunctionComponent<{
             ) : (
               <span />
             )}
+
             {hasNextPage ? (
               <Link className="flex" href={getPageURL("inc")}>
                 <button className="flex-1 rounded-full bg-white/10 px-4 py-2 font-semibold text-white no-underline transition hover:bg-white/20">
