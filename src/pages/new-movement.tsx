@@ -1,17 +1,25 @@
+import Header from "~/components/Header";
 import Metahead from "~/components/Metahead";
-import type { FieldProps, FormikHelpers } from "formik";
-import { Field, Form, Formik } from "formik";
+import type {
+  FieldErrors,
+  Message,
+  MultipleFieldErrors,
+  SubmitHandler,
+  UseFormRegisterReturn,
+} from "react-hook-form";
+import { get, useFormContext } from "react-hook-form";
+import type {
+  ComponentType,
+  FunctionComponent,
+  ReactElement,
+  ReactNode,
+} from "react";
+import { Fragment, cloneElement, createElement, isValidElement } from "react";
 import { api } from "~/utils/api";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
-import { useRouter } from "next/router";
-import Header from "~/components/Header";
-
-type FormValues = {
-  type: string;
-  amount: number | undefined;
-  description: string;
-};
 
 const initialData: FormValues = {
   description: "",
@@ -21,151 +29,213 @@ const initialData: FormValues = {
 
 const formValidation = z
   .object({
-    amount: z.number().positive().safe(),
+    amount: z
+      .number()
+      .positive()
+      .safe()
+      .finite()
+      .or(z.string())
+      .pipe(z.coerce.number()),
     description: z.string(),
     type: z.string().min(1, "Select an option first"),
   })
   .required();
 
-export default function NewMovementPage() {
-  const router = useRouter();
-  const { data: sessionData } = useSession();
-  const { mutateAsync } = api.movement.create.useMutation();
+type ErrorMessageProps = {
+  as?:
+    | undefined
+    | ReactElement
+    | ComponentType<any>
+    | keyof JSX.IntrinsicElements;
+  errors?: FieldErrors;
+  message?: Message;
+  name: string;
+  render?: (data: {
+    message: Message;
+    messages?: MultipleFieldErrors;
+  }) => ReactNode;
+};
 
-  const handleFormSubmit = async (
-    formValues: FormValues,
-    helpers: FormikHelpers<FormValues>
-  ) => {
+type Error = {
+  message: Message;
+  types?: MultipleFieldErrors;
+};
+
+const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({
+  as,
+  errors,
+  message,
+  render,
+  name,
+  ...rest
+}) => {
+  const methods = useFormContext();
+  const error = get(errors || methods.formState.errors, name) as Error;
+
+  if (!error) {
+    return null;
+  }
+
+  const { message: messageFromRegister, types } = error;
+
+  const props = Object.assign({}, rest, {
+    children: messageFromRegister || message,
+  });
+
+  return isValidElement(as)
+    ? cloneElement(as, props)
+    : render
+    ? (render({
+        message: messageFromRegister || message || "",
+        messages: types,
+      }) as ReactElement)
+    : createElement((as as string) || Fragment, props);
+};
+
+type FormValues = {
+  type: string;
+  amount: number | undefined;
+  description: string;
+};
+
+const useNewMovement = () => {
+  const router = useRouter();
+  const { mutateAsync } = api.movement.create.useMutation();
+  const { setValue, register, handleSubmit, formState } = useForm<FormValues>({
+    defaultValues: initialData,
+  });
+
+  const handleFormSubmit: SubmitHandler<FormValues> = async (data) => {
     try {
-      let amount = Number(formValues.amount);
-      amount = formValues.type === "decrease" ? amount * -1 : amount;
+      console.log("yipi", data);
+      let amount = Number(data.amount);
+      amount = data.type === "decrease" ? amount * -1 : amount;
       await mutateAsync({
         amount,
-        description: formValues.description || "No description",
+        description: data.description || "No description",
       });
-      helpers.resetForm();
       void router.push("/");
     } catch (error) {
       console.error("error while sending expense", error);
     }
   };
 
-  const handleValidation = (formValues: FormValues) => {
-    const response = formValidation.safeParse(formValues);
+  const validator = (value: unknown, fieldName: keyof FormValues) => {
+    const validationResult = formValidation.shape[fieldName].safeParse(value);
 
-    if (response.success) {
-      return {};
+    if (!validationResult.success) {
+      return validationResult.error.message;
     } else {
-      const newErrors = response.error.issues.reduce(
-        (obj, err) => ({
-          ...obj,
-          [err.path[0] as string]: err.message,
-        }),
-        {}
-      );
-      return newErrors;
+      return undefined;
     }
   };
+
+  const fields: Record<keyof FormValues, UseFormRegisterReturn> = {
+    amount: register("amount", {
+      required: true,
+      min: {
+        value: 0,
+        message: "Amount can't be negative",
+      },
+      validate: (value) => validator(value, "amount"),
+    }),
+    description: register("description", {
+      validate: (value) => validator(value, "description"),
+    }),
+    type: register("type", {
+      required: true,
+    }),
+  } as const;
+
+  return {
+    errors: formState.errors,
+    fields,
+    handleSubmit: handleSubmit(handleFormSubmit),
+    isSubmitting: formState.isSubmitting,
+    setValue,
+  };
+};
+
+export default function NewMovementPage() {
+  const { data: sessionData } = useSession();
+  const { isSubmitting, handleSubmit, setValue, errors, fields } =
+    useNewMovement();
 
   return (
     <>
       <Metahead title="New movement" />
-      <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pb-12 pt-4 text-white">
-        <Header />
+      <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
+        <div className="container mx-auto flex h-full flex-col">
+          <Header />
+          <form
+            onSubmit={(e) => void handleSubmit(e)}
+            className="grid h-full flex-1 grid-cols-4 grid-rows-[auto_1fr_auto_auto_auto] gap-4"
+          >
+            <h1 className="col-span-4 text-3xl">New movement</h1>
 
-        <Formik
-          validate={handleValidation}
-          initialValues={initialData}
-          onSubmit={(values, props) => handleFormSubmit(values, props)}
-        >
-          {({
-            errors,
-            handleSubmit,
-            isSubmitting,
-            isValidating,
-            setValues,
-          }) => (
-            <Form className="grid h-full grid-cols-4 grid-rows-[auto_1fr_auto_auto] gap-4">
-              <h1 className="col-span-4 text-3xl">New movement</h1>
+            <br />
 
-              <br />
-
-              <Field name="amount" placeholder="420" required>
-                {({ field, meta }: FieldProps) => (
-                  <label className="relative col-span-2 col-start-2">
-                    <span className="absolute left-0">€</span>
-                    <input
-                      className="w-full border-b bg-transparent text-center text-white [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none "
-                      disabled={!sessionData}
-                      placeholder="4.20"
-                      required
-                      type="number"
-                      defaultValue=""
-                      {...field}
-                    />
-                    {meta.touched && meta.error && (
-                      <span className="block text-red-500">{meta.error}</span>
-                    )}
-                  </label>
+            <label className="relative col-span-2 col-start-2">
+              <span className="absolute left-0">€</span>
+              <input
+                {...fields.amount}
+                className="w-full border-b bg-transparent text-center text-white [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none "
+                placeholder="4.20"
+                defaultValue=""
+              />
+              <ErrorMessage
+                errors={errors}
+                name="amount"
+                render={({ message }) => (
+                  <span className="block text-red-500">{message}</span>
                 )}
-              </Field>
+              />
+            </label>
 
-              <Field name="description">
-                {({ field, meta }: FieldProps) => (
-                  <label className="col-span-4">
-                    <input
-                      className="w-full px-2 py-2 text-black"
-                      disabled={!sessionData}
-                      placeholder="Description (optional)"
-                      type="string"
-                      {...field}
-                    />
-                    {meta.touched && meta.error && (
-                      <div className="text-red-500">{meta.error}</div>
-                    )}
-                  </label>
+            <label className="col-span-4">
+              <input
+                {...fields.description}
+                className="w-full px-2 py-2 text-black"
+                placeholder="Description (optional)"
+                type="string"
+              />
+              <ErrorMessage
+                errors={errors}
+                name="description"
+                render={({ message }) => (
+                  <span className="block text-red-500">{message}</span>
                 )}
-              </Field>
+              />
+            </label>
 
-              {/* THIS IS DANGEROUS plz use the upper grid later FIXME */}
-              <div className="col-span-4 grid grid-cols-[1fr_18px_1fr] grid-rows-2 items-center justify-center">
-                <button
-                  disabled={!sessionData || isSubmitting || isValidating}
-                  className="col-span-1 col-start-1 select-none bg-emerald-600 px-2 py-2 disabled:bg-slate-500"
-                  onClick={() => {
-                    setValues((formData) => ({
-                      ...formData,
-                      type: "increase",
-                    }));
-                    handleSubmit();
-                  }}
-                >
-                  Add +
-                </button>
+            {/* THIS IS DANGEROUS plz use the upper grid later FIXME */}
+            <div className="col-span-4 grid grid-cols-[1fr_18px_1fr] grid-rows-2 items-center justify-center">
+              <button
+                disabled={!sessionData || isSubmitting}
+                className="col-span-1 col-start-1 select-none bg-emerald-600 px-2 py-2 disabled:bg-slate-500"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setValue("type", "increase");
+                  void handleSubmit();
+                }}
+              >
+                Add +
+              </button>
 
-                <button
-                  disabled={!sessionData || isSubmitting || isValidating}
-                  className="col-span-1 col-start-3 select-none bg-orange-500 px-2 py-2 disabled:bg-slate-500"
-                  onClick={() => {
-                    setValues((formData) => ({
-                      ...formData,
-                      type: "decrease",
-                    }));
-                    handleSubmit();
-                  }}
-                >
-                  Remove -
-                </button>
-
-                {errors.type && (
-                  <p className="col-span-3 row-start-2 place-self-center text-red-500">
-                    {errors.type}
-                  </p>
-                )}
-              </div>
-            </Form>
-          )}
-        </Formik>
+              <button
+                disabled={!sessionData || isSubmitting}
+                className="col-span-1 col-start-3 select-none bg-orange-500 px-2 py-2 disabled:bg-slate-500"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setValue("type", "decrease");
+                  void handleSubmit();
+                }}
+              >
+                Remove -
+              </button>
+            </div>
+          </form>
+        </div>
       </main>
     </>
   );
