@@ -1,6 +1,5 @@
 import Header from "~/components/Header";
-import Metahead from "~/components/Metahead";
-import type {
+import Metahead from "~/components/Metahead"; import type {
   FieldErrors,
   Message,
   MultipleFieldErrors,
@@ -167,6 +166,9 @@ export default function NewMovementPage() {
       <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
         <div className="container mx-auto flex h-full flex-col">
           <Header />
+          
+          <br />
+
           <form
             onSubmit={(e) => void handleSubmit(e)}
             className="grid h-full flex-1 grid-cols-4 grid-rows-[auto_1fr_auto_auto_auto] gap-4"

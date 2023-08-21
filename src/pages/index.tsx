@@ -31,6 +31,8 @@ export default function Home() {
         <div className="container mx-auto flex flex-col gap-4">
           <Header />
 
+          <br />
+
           <Balance />
 
           <div className="flex flex-1 justify-center">
