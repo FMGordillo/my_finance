@@ -37,7 +37,7 @@ export default function Home() {
 
           <div className="flex flex-1 justify-center">
             <Link
-              className="block max-w-[200px] rounded-full bg-white/10 px-4 py-2 text-center font-semibold text-white no-underline transition hover:bg-white/20"
+              className="block max-w-[220px] rounded-full bg-white/10 px-6 py-4 text-center font-semibold text-white no-underline transition hover:bg-white/20"
               href="/new-movement"
             >
               New movement{" "}
