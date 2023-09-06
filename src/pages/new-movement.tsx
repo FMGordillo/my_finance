@@ -1,5 +1,6 @@
 import Header from "~/components/Header";
-import Metahead from "~/components/Metahead"; import type {
+import Metahead from "~/components/Metahead";
+import type {
   FieldErrors,
   Message,
   MultipleFieldErrors,
@@ -7,7 +8,7 @@ import Metahead from "~/components/Metahead"; import type {
   UseFormRegisterReturn,
 } from "react-hook-form";
 import { get, useFormContext } from "react-hook-form";
-import type {
+import {
   ComponentType,
   FunctionComponent,
   ReactElement,
@@ -106,7 +107,6 @@ const useNewMovement = () => {
 
   const handleFormSubmit: SubmitHandler<FormValues> = async (data) => {
     try {
-      console.log("yipi", data);
       let amount = Number(data.amount);
       amount = data.type === "decrease" ? amount * -1 : amount;
       await mutateAsync({
@@ -164,9 +164,9 @@ export default function NewMovementPage() {
     <>
       <Metahead title="New movement" />
       <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
-        <div className="container mx-auto flex h-full flex-col">
+        <div className="container mx-auto flex h-full flex-col md:w-6/12">
           <Header />
-          
+
           <br />
 
           <form
@@ -177,11 +177,12 @@ export default function NewMovementPage() {
 
             <br />
 
-            <label className="relative col-span-2 col-start-2">
-              <span className="absolute left-0">€</span>
+            <label className="relative col-span-2 col-start-2 flex h-1/2 flex-col justify-end">
+              <span className="absolute left-0 text-2xl">€</span>
               <input
                 {...fields.amount}
-                className="w-full border-b bg-transparent text-center text-white [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none "
+                autoFocus
+                className="w-full border-b bg-transparent text-center text-2xl text-white [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none "
                 placeholder="4.20"
                 defaultValue=""
               />
