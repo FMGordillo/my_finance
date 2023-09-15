@@ -8,7 +8,7 @@ import type {
   UseFormRegisterReturn,
 } from "react-hook-form";
 import { get, useFormContext } from "react-hook-form";
-import {
+import type {
   ComponentType,
   FunctionComponent,
   ReactElement,
@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
-import { useTranslation } from "next-i18next";
+import { TFunction, useTranslation } from "next-i18next";
 
 const initialData: FormValues = {
   description: "",
@@ -28,7 +28,7 @@ const initialData: FormValues = {
   type: "",
 };
 
-const getFormValidation = (t: any) =>
+const getFormValidation = (t: TFunction) =>
   z
     .object({
       amount: z

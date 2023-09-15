@@ -17,5 +17,4 @@ const MyApp: AppType<{ session: Session | null }> = ({
   );
 };
 
-// @ts-ignore
-export default appWithTranslation(api.withTRPC(MyApp), i18nConfig);
+export default api.withTRPC(appWithTranslation(MyApp, i18nConfig));
