@@ -1,0 +1,15 @@
+{
+  "new-movement": "Nuevo movimiento",
+  "sign-in": "Iniciar sesión",
+  "sign-out": "Cerrar sesión",
+  "balance": "Balance actual",
+  "movements": "Movimientos",
+  "delete-movement": "¿Seguro que querés borrar esto?",
+  "movement-form": {
+    "description": "Descripción (opcional)",
+    "no-type": "Seleccioná una opción primero",
+    "no-negative-amount": "Solo montos positivos",
+    "add": "Sumar +",
+    "remove": "Restar -"
+  }
+}

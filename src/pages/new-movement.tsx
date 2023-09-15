@@ -8,7 +8,7 @@ import type {
   UseFormRegisterReturn,
 } from "react-hook-form";
 import { get, useFormContext } from "react-hook-form";
-import {
+import type {
   ComponentType,
   FunctionComponent,
   ReactElement,
@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
+import { TFunction, useTranslation } from "next-i18next";
 
 const initialData: FormValues = {
   description: "",
@@ -27,19 +28,20 @@ const initialData: FormValues = {
   type: "",
 };
 
-const formValidation = z
-  .object({
-    amount: z
-      .number()
-      .positive()
-      .safe()
-      .finite()
-      .or(z.string())
-      .pipe(z.coerce.number()),
-    description: z.string(),
-    type: z.string().min(1, "Select an option first"),
-  })
-  .required();
+const getFormValidation = (t: TFunction) =>
+  z
+    .object({
+      amount: z
+        .number()
+        .positive()
+        .safe()
+        .finite()
+        .or(z.string())
+        .pipe(z.coerce.number()),
+      description: z.string(),
+      type: z.string().min(1, t("movement-form.no-type")),
+    })
+    .required();
 
 type ErrorMessageProps = {
   as?:
@@ -100,6 +102,7 @@ type FormValues = {
 
 const useNewMovement = () => {
   const router = useRouter();
+  const { t } = useTranslation();
   const { mutateAsync } = api.movement.create.useMutation();
   const { setValue, register, handleSubmit, formState } = useForm<FormValues>({
     defaultValues: initialData,
@@ -120,7 +123,8 @@ const useNewMovement = () => {
   };
 
   const validator = (value: unknown, fieldName: keyof FormValues) => {
-    const validationResult = formValidation.shape[fieldName].safeParse(value);
+    const validationResult =
+      getFormValidation(t).shape[fieldName].safeParse(value);
 
     if (!validationResult.success) {
       return validationResult.error.message;
@@ -134,7 +138,7 @@ const useNewMovement = () => {
       required: true,
       min: {
         value: 0,
-        message: "Amount can't be negative",
+        message: t("movement-form.no-negative-amount"),
       },
       validate: (value) => validator(value, "amount"),
     }),
@@ -156,13 +160,14 @@ const useNewMovement = () => {
 };
 
 export default function NewMovementPage() {
+  const { t } = useTranslation();
   const { data: sessionData } = useSession();
   const { isSubmitting, handleSubmit, setValue, errors, fields } =
     useNewMovement();
 
   return (
     <>
-      <Metahead title="New movement" />
+      <Metahead title={t("new-movement")} />
       <main className="relative mx-auto flex h-full flex-col gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] px-6 pt-4 text-white">
         <div className="container mx-auto flex h-full flex-col md:w-6/12">
           <Header />
@@ -173,7 +178,7 @@ export default function NewMovementPage() {
             onSubmit={(e) => void handleSubmit(e)}
             className="grid h-full flex-1 grid-cols-4 grid-rows-[auto_1fr_auto_auto_auto] gap-4"
           >
-            <h1 className="col-span-4 text-3xl">New movement</h1>
+            <h1 className="col-span-4 text-3xl">{t("new-movement")}</h1>
 
             <br />
 
@@ -199,7 +204,7 @@ export default function NewMovementPage() {
               <input
                 {...fields.description}
                 className="w-full px-2 py-2 text-black"
-                placeholder="Description (optional)"
+                placeholder={t("movement-form.description")}
                 type="string"
               />
               <ErrorMessage
@@ -222,7 +227,7 @@ export default function NewMovementPage() {
                   void handleSubmit();
                 }}
               >
-                Add +
+                {t("movement-form.add")}
               </button>
 
               <button
@@ -234,7 +239,7 @@ export default function NewMovementPage() {
                   void handleSubmit();
                 }}
               >
-                Remove -
+                {t("movement-form.remove")}
               </button>
             </div>
           </form>

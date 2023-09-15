@@ -4,6 +4,7 @@ import type { FunctionComponent } from "react";
 import type { Movement } from "@prisma/client";
 import { formatCurrency } from "~/utils/currency";
 import { useRouter } from "next/router";
+import { useTranslation } from "next-i18next";
 
 const Movements: FunctionComponent<{
   data: Movement[] | undefined;
@@ -11,6 +12,7 @@ const Movements: FunctionComponent<{
   handleDelete: (movement: Movement) => Promise<void>;
 }> = ({ hasNextPage, handleDelete, data }) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const pageQuery = router.query.page || "1";
 
   const getPageURL = (type: "inc" | "dec") => {
@@ -31,7 +33,7 @@ const Movements: FunctionComponent<{
   };
 
   const handleRemove = (movement: Movement) => {
-    const response = confirm("Are you sure you want to delete this field?");
+    const response = confirm(t('delete-movement'));
 
     if (!response) {
       return;
