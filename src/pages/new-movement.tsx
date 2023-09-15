@@ -21,6 +21,8 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
 import { TFunction, useTranslation } from "next-i18next";
+import { GetStaticProps } from "next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 
 const initialData: FormValues = {
   description: "",
@@ -248,3 +250,14 @@ export default function NewMovementPage() {
     </>
   );
 }
+//
+// or getServerSideProps: GetServerSideProps<Props> = async ({ locale })
+export const getStaticProps: GetStaticProps = async ({
+  locale,
+}) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'es', [
+      'common',
+    ])),
+  },
+})

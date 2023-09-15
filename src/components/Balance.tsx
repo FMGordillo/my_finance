@@ -12,7 +12,7 @@ const Balance: FunctionComponent = () => {
     <h1 className="flex flex-col items-center gap-2">
       <>
         <p className="text-5xl">{isLoading ? "Loading..." : parsedAmount}</p>
-        <p className="text-md text-gray-300">{t("current-balance")}</p>
+        <p className="text-md text-gray-300">{t("balance")}</p>
       </>
     </h1>
   );
