@@ -3,11 +3,7 @@ let
 in
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
-    pkg-config
-    cargo
-    openssl # For Prisma
     nodejs_18
-    protobuf
     nodePackages.pnpm
   ];
 }

@@ -1,0 +1,15 @@
+{
+  "new-movement": "New movement",
+  "sign-in": "Sign in",
+  "sign-out": "Sign out",
+  "balance": "Current balance",
+  "movements": "Movements",
+  "delete-movement": "Are you sure you want to delete this field?",
+  "movement-form": {
+    "description": "Description (optional)",
+    "no-type": "Select an option first",
+    "no-negative-amount": "Amount can't be negative",
+    "add": "Add +",
+    "remove": "Remove -"
+  }
+}

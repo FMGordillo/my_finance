@@ -7,8 +7,12 @@ import type { Movement } from "@prisma/client";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "next-i18next";
+import { GetStaticProps } from "next";
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 export default function Home() {
+  const { t } = useTranslation('common')
   const router = useRouter();
   const { data: sessionData } = useSession();
 
@@ -40,7 +44,7 @@ export default function Home() {
               className="block max-w-[220px] rounded-full bg-white/10 px-6 py-4 text-center font-semibold text-white no-underline transition hover:bg-white/20"
               href="/new-movement"
             >
-              New movement{" "}
+              {t('new-movement')}{" "}
               <span role="img" aria-label="plus">
                 ➕
               </span>
@@ -67,3 +71,13 @@ export default function Home() {
     </>
   );
 }
+// or getServerSideProps: GetServerSideProps<Props> = async ({ locale })
+export const getStaticProps: GetStaticProps = async ({
+  locale,
+}) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'es', [
+      'common',
+    ])),
+  },
+})
